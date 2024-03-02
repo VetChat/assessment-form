@@ -2,6 +2,7 @@ import { Checkbox } from "@mantine/core";
 import { randomId, useListState } from "@mantine/hooks";
 import { useEffect, useState } from "react";
 import { useQuery } from "react-query";
+import QuestionCard from "../QuestionCard/QuestionCard";
 
 const mockedUrgentList = [
   { label: "อาการท้องอืด", checked: false, urgencyId: 1, key: "1" },
@@ -42,32 +43,19 @@ const UrgentCheckbox: React.FC<UrgentCheckboxProps> = ({ animalId }) => {
       const response = await fetch(
         `http://localhost:8000/urgent_cases/animal/${animalId}`
       );
-      return response.json();
+      return await response.json();
     },
   });
 
   useEffect(() => {
-    console.log(urgentListQuery.isFetching);
     if (urgentListQuery.data) {
       setUrgentList(urgentListQuery.data);
-      console.log(urgentListQuery.data);
     }
-  }, []);
-
-  //   const initialValues: InitialValue[] = urgentList.map((urgent) => {
-  //     const container = {} as InitialValue;
-  //     container.label = urgent.urgentName;
-  //     container.checked = false;
-  //     container.urgencyId = urgent.urgencyId;
-  //     container.key = randomId();
-  //     return container;
-  //   });
-
-  console.log(values);
+  }, [urgentListQuery.data]);
 
   const options = values.map((value, index) => (
     <Checkbox
-      className="mb-2"
+      className="p-4"
       key={value.key}
       label={value.label}
       checked={value.checked}
@@ -79,12 +67,12 @@ const UrgentCheckbox: React.FC<UrgentCheckboxProps> = ({ animalId }) => {
   ));
 
   return (
-    <div>
+    <QuestionCard>
       <div className="font-medium text-xl pb-4">
         โปรดเลือกอาการฉุกเฉินที่พบในสัตว์เลี้ยงของคุณ
       </div>
       <div>{options}</div>
-    </div>
+    </QuestionCard>
   );
 };
 

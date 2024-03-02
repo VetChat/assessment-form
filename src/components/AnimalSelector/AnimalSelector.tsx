@@ -20,16 +20,16 @@ const AnimalSelector: React.FC<AnimalSelectorProps> = ({ onSubmit }) => {
     queryKey: ["animals"],
     queryFn: async () => {
       const response = await fetch("http://localhost:8000/animals");
-      return response.json();
+      const jsonData = await response.json();
+      return jsonData;
     },
   });
 
   useEffect(() => {
-    console.log(animalQuery.isFetching);
     if (animalQuery.data) {
       setAnimals(animalQuery.data);
     }
-  }, []);
+  }, [animalQuery.data]);
 
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
@@ -93,10 +93,10 @@ const AnimalSelector: React.FC<AnimalSelectorProps> = ({ onSubmit }) => {
         </Combobox.Dropdown>
       </Combobox>
       <Button
-        onClick={(event) =>
+        onClick={() =>
           onSubmit(animals.find((animal) => animal.name == value)?.animal_id)
         }
-        className="mt-4"
+        className="mt-10"
       >
         Submit
       </Button>
