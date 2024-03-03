@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useQuery } from "react-query";
 
 type animalList = {
-  animal_id: number;
+  animalId: number;
   name: string;
 }[];
 
@@ -43,7 +43,7 @@ const AnimalSelector: React.FC<AnimalSelectorProps> = ({ onSubmit }) => {
     : animals;
 
   const options = filteredOptions.map((animal) => (
-    <Combobox.Option key={animal.animal_id} value={animal.name}>
+    <Combobox.Option key={animal.animalId} value={animal.name}>
       {animal.name}
     </Combobox.Option>
   ));
@@ -92,14 +92,18 @@ const AnimalSelector: React.FC<AnimalSelectorProps> = ({ onSubmit }) => {
           </Combobox.Options>
         </Combobox.Dropdown>
       </Combobox>
-      <Button
-        onClick={() =>
-          onSubmit(animals.find((animal) => animal.name == value)?.animal_id)
-        }
-        className="mt-10"
-      >
-        Submit
-      </Button>
+      <div className="flex w-full justify-end">
+        <Button
+          color="teal"
+          variant="light"
+          onClick={() =>
+            onSubmit(animals.find((animal) => animal.name == value)?.animalId)
+          }
+          className="mt-10"
+        >
+          Next
+        </Button>
+      </div>
     </div>
   );
 };

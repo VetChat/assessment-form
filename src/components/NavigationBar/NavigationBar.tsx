@@ -1,9 +1,9 @@
 const NavigationBar = () => {
-    return (
-        <div className="flex w-full shadow h-20 text-[#306653] justify-center items-center pl-4 text-2xl font-medium">
-            VetChat
-        </div>
-    );
-}
+  return (
+    <div className="flex w-full border shadow-lg h-20 bg-white text-[#306653]  items-center pl-20 text-2xl font-medium">
+      VetChat
+    </div>
+  );
+};
 
 export default NavigationBar;

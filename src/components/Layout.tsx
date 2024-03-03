@@ -11,7 +11,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <header>
         <NavigationBar />
       </header>
-      <main>{children}</main>
+      <main className="h-[100vh]">{children}</main>
       {/* <footer>
         <h1>Footer</h1>
       </footer> */}
