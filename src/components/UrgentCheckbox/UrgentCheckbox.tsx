@@ -5,6 +5,7 @@ import { useQuery } from "react-query";
 
 interface UrgentCheckboxProps {
   onSubmit: (selectedOption: ResponseType[]) => void;
+  onBack: () => void;
   animalId: number;
 }
 
@@ -28,6 +29,7 @@ interface UrgentOption {
 const UrgentCheckbox: React.FC<UrgentCheckboxProps> = ({
   animalId,
   onSubmit,
+  onBack,
 }) => {
   const [urgentList, setUrgentList] = useState<UrgentType[]>([]);
   const [urgencyList, setUrgencyList] = useState<ResponseType[]>([]);
@@ -85,13 +87,14 @@ const UrgentCheckbox: React.FC<UrgentCheckboxProps> = ({
 
   return (
     <>
-      <div className="font-medium text-xl pb-4">
+      <div className="font-medium text-xl pb-4 pt-20">
         โปรดเลือกอาการฉุกเฉินที่พบในสัตว์เลี้ยงของคุณ
       </div>
       {option.map((value, index) => (
         <Checkbox
           size="md"
           className="p-4"
+          color="green"
           key={value.key}
           label={value.urgent.urgentName}
           checked={value.checked}
@@ -108,6 +111,7 @@ const UrgentCheckbox: React.FC<UrgentCheckboxProps> = ({
         size="md"
         className="p-4"
         label={"ไม่มีอาการข้างต้น"}
+        color="green"
         checked={!hasChecked}
         onChange={() =>
           optionHandlers.setState((option) =>
@@ -115,7 +119,15 @@ const UrgentCheckbox: React.FC<UrgentCheckboxProps> = ({
           )
         }
       />
-      <div className="flex w-full justify-end">
+      <div className="flex w-full justify-between">
+        <Button
+          color="red"
+          variant="outline"
+          className="mt-10"
+          onClick={() => onBack()}
+        >
+          Back
+        </Button>
         <Button
           color="teal"
           variant="light"

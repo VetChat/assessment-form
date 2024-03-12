@@ -49,7 +49,7 @@ const AnimalSelector: React.FC<AnimalSelectorProps> = ({ onSubmit }) => {
   ));
 
   return (
-    <div>
+    <div className="flex-col w-[1000px] px-10 pt-20 text-left">
       <div className="font-medium text-xl pb-4">
         โปรดเลือกชนิดของสัตว์เลี้ยง
       </div>
@@ -100,6 +100,7 @@ const AnimalSelector: React.FC<AnimalSelectorProps> = ({ onSubmit }) => {
             onSubmit(animals.find((animal) => animal.name == value)?.animalId)
           }
           className="mt-10"
+          disabled={!value}
         >
           Next
         </Button>

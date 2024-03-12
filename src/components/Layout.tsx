@@ -1,5 +1,6 @@
 import React from "react";
 import NavigationBar from "./NavigationBar/NavigationBar";
+import ProgressBar from "./Footer/ProgressBar";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,10 +12,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <header>
         <NavigationBar />
       </header>
-      <main className="h-[100vh]">{children}</main>
-      {/* <footer>
-        <h1>Footer</h1>
-      </footer> */}
+      <main className="h-full">{children}</main>
+      <footer className="fixed bottom-0 w-full">
+        <ProgressBar active={0} />
+      </footer>
     </React.Fragment>
   );
 };

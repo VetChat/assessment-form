@@ -4,6 +4,7 @@ import App from "./App.tsx";
 import "./index.css";
 
 import "@mantine/core/styles.css";
+import "@mantine/dates/styles.css";
 
 import { MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "react-query";

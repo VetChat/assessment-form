@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import AnimalSelector from "../../components/AnimalSelector/AnimalSelector";
 import UrgentCheckbox, {
   ResponseType,
 } from "../../components/UrgentCheckbox/UrgentCheckbox";
 import ProgressBar from "../../components/Footer/ProgressBar";
 import { Step } from "./Interface/Home.ts";
-import { useMutation } from "react-query";
 import axios from "axios";
+import { CiWarning } from "react-icons/ci";
+import TrackingQuestion from "../../components/QuestionItem/TrackingQuestion.tsx";
 
 interface WarningType {
   urgencyDetail: string;
@@ -15,62 +16,77 @@ interface WarningType {
 
 const Home = () => {
   const [animalId, setAnimalId] = useState<number>();
-  const [urgentList, setUrgentList] = useState<ResponseType[] | null>(null);
   const [stepNumber, setStepNumber] = useState(Step.choosePet);
   const [warning, setWarning] = useState<WarningType | null>(null);
 
   const handleSelectAnimal = (id: number | undefined) => {
-    setAnimalId(id);
-    setStepNumber(Step.chooseUrgent);
+    if (id) {
+      setAnimalId(id);
+      setStepNumber(Step.chooseUrgent);
+    }
   };
 
   const handleSelectUrgent = (selectedOption: ResponseType[]) => {
-    setUrgentList(selectedOption);
-  };
-
-  useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axios.post(
           "http://localhost:8000/urgency/most_urgent",
-          urgentList
+          selectedOption
         );
-        setWarning(response.data);
+        return response.data;
       } catch (error) {
         console.error("Error fetching warning:", error);
       }
     };
-
-    if (urgentList && urgentList.length > 0) {
-      fetchData();
+    if (selectedOption.length > 0) {
+      setStepNumber(Step.done);
+      const urgencyWarning = fetchData();
+      urgencyWarning.then((warn) => setWarning(warn));
+    } else if (selectedOption.length === 0) {
+      setStepNumber(Step.answerQuestion);
     }
-  }, [urgentList]);
+  };
+
+  const handleBack = () => {
+    if (stepNumber > Step.choosePet) {
+      setStepNumber(stepNumber - 1);
+    }
+  };
 
   if (warning) {
     return (
-      <div>
-        {warning.urgencyDetail}
-        Please contact vet within {warning.duration}
-      </div>
+      <>
+        <div className="flex pt-20 justify-center items-center">
+          <CiWarning className="text-red-400 text-9xl"></CiWarning>
+        </div>
+        <label className="text-[25px] font-semibold">
+          {warning.urgencyDetail}
+        </label>
+        <br />
+        <label>
+          Please contact veterinary hospital within: {warning.duration}
+        </label>
+        {/* <ProgressBar active={Step.done} /> */}
+      </>
     );
   }
 
   return (
-    <div className="bg-[#F5F5F5] w-full h-full">
-      <div className="mx-40 pt-20 pb-10 text-left">
-        {stepNumber === Step.choosePet && (
-          <AnimalSelector onSubmit={handleSelectAnimal} />
-        )}
-        {stepNumber === Step.chooseUrgent && (
-          <div>
-            <UrgentCheckbox
-              onSubmit={handleSelectUrgent}
-              animalId={animalId!}
-            />
-          </div>
-        )}
-      </div>
-      <ProgressBar active={stepNumber} />
+    <div className="flex justify-center items-center">
+      {stepNumber === Step.choosePet && (
+        <AnimalSelector onSubmit={handleSelectAnimal} />
+      )}
+      {stepNumber === Step.chooseUrgent && (
+        <div>
+          <UrgentCheckbox
+            onSubmit={handleSelectUrgent}
+            onBack={handleBack}
+            animalId={animalId!}
+          />
+        </div>
+      )}
+      {stepNumber === Step.answerQuestion && <TrackingQuestion />}
+      {/* <ProgressBar active={stepNumber} /> */}
     </div>
   );
 };
