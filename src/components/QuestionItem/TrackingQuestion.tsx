@@ -1,103 +1,100 @@
 import { useForm } from "@mantine/form";
-import { Group, NumberInput, Radio, TextInput } from "@mantine/core";
+import {
+  Button,
+  Group,
+  LoadingOverlay,
+  NumberInput,
+  Radio,
+  TextInput,
+} from "@mantine/core";
 import { DateInput } from "@mantine/dates";
-import { useState } from "react";
+import dayjs from "dayjs";
+import { useEffect, useState } from "react";
+import { useQuery } from "react-query";
 
 interface TrackingQuestionType {
   questionId: number;
-  questionText: string;
+  question: string;
   pattern: string;
-  required: boolean;
-  choices?: ChoiceType[];
+  ordinal?: number;
+  isRequired: boolean;
+  listAnswer?: ChoiceType[];
 }
 
 interface ChoiceType {
-  choiceId: number;
-  choiceText: string;
-}
-
-const mockedQuestion: TrackingQuestionType[] = [
-  {
-    questionId: 0,
-    questionText: "What is your pet id?",
-    pattern: "text",
-    required: false,
-  },
-  {
-    questionId: 1,
-    questionText: "Specify sex",
-    pattern: "choice",
-    required: true,
-    choices: [
-      { choiceId: 1, choiceText: "Male" },
-      { choiceId: 2, choiceText: "Female" },
-    ],
-  },
-  {
-    questionId: 2,
-    questionText: "Birth Date (or Approximate year)",
-    pattern: "birthDate",
-    required: true,
-  },
-];
-
-interface ResponseType {
-  questionId: number;
-  answer: string | Date | number | null;
+  answerId: number;
+  answer: string;
 }
 
 const TrackingQuestion = () => {
   const [isDate, setIsDate] = useState(true);
 
+  const { data: trackingQuestion, isLoading } = useQuery<
+    TrackingQuestionType[]
+  >({
+    queryKey: "trackingQuestion",
+    queryFn: () =>
+      fetch("http://localhost:8000/ticket_questions").then((res) => res.json()),
+  });
+
   const form = useForm({
     initialValues: {
-      questions: mockedQuestion,
-      answerList: mockedQuestion.map((item) => ({
-        questionId: item.questionId,
-        answer: null,
-      })),
+      questions: [] as TrackingQuestionType[],
+      answerList: {} as { [key: number]: string },
     },
   });
 
-  console.log(form.values);
+  useEffect(() => {
+    if (trackingQuestion) {
+      form.setValues({
+        questions: trackingQuestion,
+        answerList:
+          trackingQuestion &&
+          trackingQuestion.reduce((acc: any, item: TrackingQuestionType) => {
+            acc[item.questionId] = "";
+            return acc;
+          }, {} as { [key: number]: string }),
+      });
+    }
+  }, [trackingQuestion]);
+
+  if (isLoading) {
+    return <LoadingOverlay visible />;
+  }
 
   const renderQuestion = (questionItem: TrackingQuestionType) => {
+    console.log(form!.values);
     switch (questionItem.pattern) {
       case "text":
         return (
           <div>
             <TextInput
-              label={questionItem.questionText}
+              label={questionItem.question}
               className="w-[500px]"
-              {...form.getInputProps(
-                `answerList.${questionItem.questionId}.answer`
-              )}
-              required={questionItem.required}
+              {...form?.getInputProps(`answerList.${questionItem.questionId}`)}
+              required={questionItem.isRequired}
             />
           </div>
         );
       case "choice":
-        if (questionItem.choices) {
+        if (questionItem.listAnswer) {
+          const answerId = form.values.answerList[questionItem.questionId];
           return (
             <Radio.Group
-              name={`question_${questionItem.questionId}`}
-              label={questionItem.questionText}
-              withAsterisk={questionItem.required}
+              label={questionItem.question}
+              withAsterisk={questionItem.isRequired}
             >
               <Group mt="xs">
-                {questionItem.choices.map((choice) => (
+                {questionItem.listAnswer.map((choice) => (
                   <Radio
-                    key={choice.choiceId}
-                    value={choice.choiceId.toString()}
-                    label={choice.choiceText}
-                    checked={
-                      form.values.answerList[questionItem.questionId]
-                        ?.answer === choice.choiceId
-                    }
+                    key={choice.answerId}
+                    value={choice.answerId.toString()}
+                    label={choice.answer}
+                    checked={answerId === choice.answerId.toString()}
                     onChange={() => {
                       form.setFieldValue(
-                        `answerList.${questionItem.questionId}.answer`,
-                        choice.choiceId
+                        `answerList.${questionItem.questionId}`,
+                        choice.answerId.toString()
                       );
                     }}
                   />
@@ -108,46 +105,81 @@ const TrackingQuestion = () => {
         }
         break;
       case "birthDate":
+        const answer = form!.values.answerList[questionItem.questionId];
         return (
-          <div className="pb-[10px]">
+          <div>
             <Radio.Group
-              label={questionItem.questionText}
-              name={`question_${questionItem.questionId}`}
-              required={questionItem.required}
+              label={questionItem.question}
+              required={questionItem.isRequired}
             >
-              <Group mt="xs">
+              <div className="flex gap-3">
                 <Radio
                   value="date"
-                  label="ระบุวันเกิด"
+                  label="Specify birth date"
+                  name={`group_${questionItem.question}`}
+                  checked={isDate}
                   onChange={() => {
                     setIsDate(true);
+                    if (answer) {
+                      form!.setFieldValue(
+                        `answerList.${questionItem.questionId}`,
+                        ""
+                      );
+                    }
                   }}
                 />
                 <Radio
                   value="year"
-                  label="ระบุอายุ (ปี) โดยประมาณ"
+                  label="Specify approximate age (years)"
+                  name={`group_${questionItem.question}`}
+                  checked={!isDate}
                   onChange={() => {
                     setIsDate(false);
+                    if (answer) {
+                      form!.setFieldValue(
+                        `answerList.${questionItem.questionId}`,
+                        ""
+                      );
+                    }
                   }}
                 />
-              </Group>
+              </div>
             </Radio.Group>
             {isDate ? (
               <DateInput
-                {...form.getInputProps(
-                  `answerList.${questionItem.questionId}.answer`
-                )}
-                valueFormat="DD/MM/YYYY HH:mm:ss"
                 label="Birth Date"
-                placeholder="MM/DD/YYYY"
+                valueFormat="DD/MM/YYYY"
+                placeholder="DD/MM/YYYY"
+                onChange={(e) => {
+                  if (!e) {
+                    return;
+                  }
+                  const date = dayjs(e).format("YYYY-MM-DD");
+                  form.setFieldValue(
+                    `answerList.${questionItem.questionId}`,
+                    date
+                  );
+                }}
               />
             ) : (
               <NumberInput
-                {...form.getInputProps(
-                  `answerList.${questionItem.questionId}.answer`
-                )}
                 label="Age"
                 placeholder="Age"
+                allowDecimal={false}
+                allowNegative={false}
+                onChange={(e) => {
+                  if (!e) {
+                    return;
+                  }
+                  const date = dayjs().set(
+                    "year",
+                    dayjs().year() - (e as number)
+                  );
+                  form.setFieldValue(
+                    `answerList.${questionItem.questionId}`,
+                    date.format("YYYY-MM-DD")
+                  );
+                }}
               />
             )}
           </div>
@@ -156,14 +188,22 @@ const TrackingQuestion = () => {
   };
 
   return (
-    <div className="flex flex-col justify-center items-center w-full mt-20 overflow-y-scroll pb-10">
-      <form onSubmit={form.onSubmit((values) => console.log(values))}>
-        {mockedQuestion.map((item, index) => (
-          <div key={index} className="text-left pb-8">
-            {renderQuestion(item)}
-          </div>
-        ))}
-      </form>
+    <div className="flex flex-col justify-center items-center w-full mt-20 pb-10">
+      {trackingQuestion && (
+        <form
+          onSubmit={form.onSubmit((values) => console.log("res: ", values))}
+        >
+          {form.values.questions.length > 0 &&
+            form.values.questions.map((item: TrackingQuestionType) => (
+              <div key={item.ordinal} className="text-left pb-8">
+                {renderQuestion(item)}
+              </div>
+            ))}
+          <Group justify="flex-end" mt="md">
+            <Button type="submit">Submit</Button>
+          </Group>
+        </form>
+      )}
     </div>
   );
 };

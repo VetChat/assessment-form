@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from "react";
+import { useState } from "react";
 import AnimalSelector from "../../components/AnimalSelector/AnimalSelector";
 import UrgentCheckbox, {
   ResponseType,
@@ -55,10 +55,8 @@ const Home = () => {
 
   if (warning) {
     return (
-      <>
-        <div className="flex pt-20 justify-center items-center">
-          <CiWarning className="text-red-400 text-9xl"></CiWarning>
-        </div>
+      <div className="flex flex-col pt-20 justify-center items-center">
+        <CiWarning className="text-red-400 text-9xl"></CiWarning>
         <label className="text-[25px] font-semibold">
           {warning.urgencyDetail}
         </label>
@@ -67,12 +65,12 @@ const Home = () => {
           Please contact veterinary hospital within: {warning.duration}
         </label>
         {/* <ProgressBar active={Step.done} /> */}
-      </>
+      </div>
     );
   }
 
   return (
-    <div className="flex justify-center items-center">
+    <div className="flex w-full justify-center items-center overflow-auto">
       {stepNumber === Step.choosePet && (
         <AnimalSelector onSubmit={handleSelectAnimal} />
       )}

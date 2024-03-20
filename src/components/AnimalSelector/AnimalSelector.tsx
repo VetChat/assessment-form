@@ -1,5 +1,5 @@
 import { Button, Combobox, InputBase, useCombobox } from "@mantine/core";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useQuery } from "react-query";
 
 interface Animal {
@@ -44,7 +44,7 @@ const AnimalSelector: React.FC<AnimalSelectorProps> = ({ onSubmit }) => {
     ));
 
   return (
-    <div className="flex-col w-[1000px] px-10 pt-20 text-left">
+    <div className="flex-col w-[500px] px-10 pt-20 text-left">
       <div className="font-medium text-xl pb-4">
         โปรดเลือกชนิดของสัตว์เลี้ยง
       </div>

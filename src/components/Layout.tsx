@@ -8,15 +8,22 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <React.Fragment>
-      <header>
+    // <React.Fragment>
+    //   <header>
+    //     <NavigationBar />
+    //   </header>
+    //   <main className="">{children}</main>
+    //   <footer className="fixed bottom-0 w-full">
+    //     <ProgressBar active={0} />
+    //   </footer>
+    // </React.Fragment>
+    <div className="h-screen w-screen relative">
+      <div className="h-full w-full">
         <NavigationBar />
-      </header>
-      <main className="h-full">{children}</main>
-      <footer className="fixed bottom-0 w-full">
-        <ProgressBar active={0} />
-      </footer>
-    </React.Fragment>
+        {children}
+        <ProgressBar active={0}></ProgressBar>
+      </div>
+    </div>
   );
 };
 

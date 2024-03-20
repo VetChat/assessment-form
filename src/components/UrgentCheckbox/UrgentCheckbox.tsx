@@ -1,6 +1,6 @@
 import { Button, Checkbox, LoadingOverlay } from "@mantine/core";
 import { useListState } from "@mantine/hooks";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "react-query";
 
 interface UrgentCheckboxProps {
@@ -42,11 +42,11 @@ const UrgentCheckbox: React.FC<UrgentCheckboxProps> = ({
           res
             .json()
             .then((data) =>
-              data.map((value: UrgentType) => ({
+              data.map((value: UrgentType, index: number) => ({
                 urgent: value,
                 checked: false,
                 urgencyId: value.urgencyId,
-                key: value.urgencyId.toString(),
+                key: index,
               }))
             )
             .then((data) => optionHandlers.setState(data))
@@ -61,14 +61,19 @@ const UrgentCheckbox: React.FC<UrgentCheckboxProps> = ({
         urgencyId: value.urgent.urgencyId,
       }));
 
-    console.log("selected: ", selectedOption);
-
     if (selectedOption.length > 0 || isNone) {
       onSubmit(selectedOption);
     } else {
       alert("โปรดเลือกอย่างน้อย 1 อาการ");
     }
   };
+
+  useEffect(() => {
+    const hasChecked = option.some((value) => value.checked);
+    if (hasChecked) {
+      setNone(false);
+    }
+  }, [option]);
 
   if (isLoading) {
     return <LoadingOverlay visible>Loading...</LoadingOverlay>;
@@ -121,6 +126,7 @@ const UrgentCheckbox: React.FC<UrgentCheckboxProps> = ({
           Back
         </Button>
         <Button
+          disabled={!(option.some((value) => value.checked) || isNone)}
           color="teal"
           variant="light"
           className="mt-10"
