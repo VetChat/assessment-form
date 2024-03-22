@@ -8,3 +8,17 @@ export enum Step {
   answerQuestion = 2,
   done = 3,
 }
+
+export interface Answer {
+  questionId: number;
+  answer: string;
+}
+
+export interface AnswerResponse {
+  animalId: number;
+  listAnswer: Answer[];
+}
+
+export interface Ticket {
+  ticketId: number;
+}

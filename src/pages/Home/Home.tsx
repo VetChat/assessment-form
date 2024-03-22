@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AnimalSelector from "../../components/AnimalSelector/AnimalSelector";
 import UrgentCheckbox, {
   ResponseType,
 } from "../../components/UrgentCheckbox/UrgentCheckbox";
-import ProgressBar from "../../components/Footer/ProgressBar";
-import { Step } from "./Interface/Home.ts";
+import { Answer, AnswerResponse, Step, Ticket } from "./Interface/Home.ts";
 import axios from "axios";
 import { CiWarning } from "react-icons/ci";
-import TrackingQuestion from "../../components/QuestionItem/TrackingQuestion.tsx";
+import QuestionItem from "../../components/QuestionItem/QuestionItem.tsx";
+import { useMutation } from "react-query";
+import { FormValue } from "../../components/QuestionItem/interface/QuestionItem";
 
 interface WarningType {
   urgencyDetail: string;
@@ -18,6 +19,18 @@ const Home = () => {
   const [animalId, setAnimalId] = useState<number>();
   const [stepNumber, setStepNumber] = useState(Step.choosePet);
   const [warning, setWarning] = useState<WarningType | null>(null);
+  const [ticketId, setTicketId] = useState<number>();
+
+  const { mutate } = useMutation({
+    mutationFn: (answer: AnswerResponse) =>
+      fetch("http://localhost:8000/tickets", {
+        method: "POST",
+        body: JSON.stringify(answer),
+        headers: { "Content-type": "application/json; charset=UTF-8" },
+      })
+        .then((res) => res.json())
+        .then((ticket: Ticket) => setTicketId(ticket.ticketId)),
+  });
 
   const handleSelectAnimal = (id: number | undefined) => {
     if (id) {
@@ -53,6 +66,29 @@ const Home = () => {
     }
   };
 
+  const mapFormToAnswer = (formValue: FormValue) => {
+    const ans: Answer[] = [];
+    for (const key in formValue.answerList) {
+      ans.push({
+        questionId: parseInt(key),
+        answer: formValue.answerList[key],
+      });
+    }
+    return ans;
+  };
+
+  const handleSubmitHistory = (value: FormValue) => {
+    const answerList = mapFormToAnswer(value);
+    mutate({
+      animalId: animalId!,
+      listAnswer: answerList,
+    });
+  };
+
+  useEffect(() => {
+    console.log(ticketId);
+  }, [ticketId]);
+
   if (warning) {
     return (
       <div className="flex flex-col pt-20 justify-center items-center">
@@ -70,7 +106,7 @@ const Home = () => {
   }
 
   return (
-    <div className="flex w-full justify-center items-center overflow-auto">
+    <div className="flex w-full h-full justify-center overflow-auto bg-white">
       {stepNumber === Step.choosePet && (
         <AnimalSelector onSubmit={handleSelectAnimal} />
       )}
@@ -83,7 +119,9 @@ const Home = () => {
           />
         </div>
       )}
-      {stepNumber === Step.answerQuestion && <TrackingQuestion />}
+      {stepNumber === Step.answerQuestion && (
+        <QuestionItem onSubmitHandler={handleSubmitHistory} />
+      )}
       {/* <ProgressBar active={stepNumber} /> */}
     </div>
   );

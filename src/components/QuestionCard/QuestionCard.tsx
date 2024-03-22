@@ -6,7 +6,9 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   additionnalClass,
 }) => {
   return (
-    <div className={`rounded-md shadow w-full p-14 ${additionnalClass}`}>
+    <div
+      className={`rounded-md shadow w-full p-5 mb-5 border ${additionnalClass}`}
+    >
       {children}
     </div>
   );

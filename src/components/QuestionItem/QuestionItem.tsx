@@ -11,27 +11,16 @@ import { DateInput } from "@mantine/dates";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { useQuery } from "react-query";
+import {
+  FormValue,
+  Question,
+  QuestionItemProps,
+} from "./interface/QuestionItem";
 
-interface TrackingQuestionType {
-  questionId: number;
-  question: string;
-  pattern: string;
-  ordinal?: number;
-  isRequired: boolean;
-  listAnswer?: ChoiceType[];
-}
-
-interface ChoiceType {
-  answerId: number;
-  answer: string;
-}
-
-const TrackingQuestion = () => {
+const QuestionItem: React.FC<QuestionItemProps> = ({ onSubmitHandler }) => {
   const [isDate, setIsDate] = useState(true);
 
-  const { data: trackingQuestion, isLoading } = useQuery<
-    TrackingQuestionType[]
-  >({
+  const { data: trackingQuestion, isLoading } = useQuery<Question[]>({
     queryKey: "trackingQuestion",
     queryFn: () =>
       fetch("http://localhost:8000/ticket_questions").then((res) => res.json()),
@@ -39,7 +28,7 @@ const TrackingQuestion = () => {
 
   const form = useForm({
     initialValues: {
-      questions: [] as TrackingQuestionType[],
+      questions: [] as Question[],
       answerList: {} as { [key: number]: string },
     },
   });
@@ -50,7 +39,7 @@ const TrackingQuestion = () => {
         questions: trackingQuestion,
         answerList:
           trackingQuestion &&
-          trackingQuestion.reduce((acc: any, item: TrackingQuestionType) => {
+          trackingQuestion.reduce((acc: any, item: Question) => {
             acc[item.questionId] = "";
             return acc;
           }, {} as { [key: number]: string }),
@@ -62,15 +51,13 @@ const TrackingQuestion = () => {
     return <LoadingOverlay visible />;
   }
 
-  const renderQuestion = (questionItem: TrackingQuestionType) => {
-    console.log(form!.values);
+  const renderQuestion = (questionItem: Question) => {
     switch (questionItem.pattern) {
       case "text":
         return (
           <div>
             <TextInput
               label={questionItem.question}
-              className="w-[500px]"
               {...form?.getInputProps(`answerList.${questionItem.questionId}`)}
               required={questionItem.isRequired}
             />
@@ -87,6 +74,7 @@ const TrackingQuestion = () => {
               <Group mt="xs">
                 {questionItem.listAnswer.map((choice) => (
                   <Radio
+                    required={questionItem.isRequired}
                     key={choice.answerId}
                     value={choice.answerId.toString()}
                     label={choice.answer}
@@ -108,16 +96,13 @@ const TrackingQuestion = () => {
         const answer = form!.values.answerList[questionItem.questionId];
         return (
           <div>
-            <Radio.Group
-              label={questionItem.question}
-              required={questionItem.isRequired}
-            >
-              <div className="flex gap-3">
+            <Radio.Group label={questionItem.question} defaultValue="date">
+              <div className="flex gap-3 py-3">
                 <Radio
                   value="date"
-                  label="Specify birth date"
+                  label="ระบุ (วัน/เดือน/ปี) เกิด"
                   name={`group_${questionItem.question}`}
-                  checked={isDate}
+                  required={questionItem.isRequired}
                   onChange={() => {
                     setIsDate(true);
                     if (answer) {
@@ -130,9 +115,9 @@ const TrackingQuestion = () => {
                 />
                 <Radio
                   value="year"
-                  label="Specify approximate age (years)"
+                  label="ระบุอายุ (กรณีไม่ทราบวันเกิด)"
                   name={`group_${questionItem.question}`}
-                  checked={!isDate}
+                  required={questionItem.isRequired}
                   onChange={() => {
                     setIsDate(false);
                     if (answer) {
@@ -147,9 +132,9 @@ const TrackingQuestion = () => {
             </Radio.Group>
             {isDate ? (
               <DateInput
-                label="Birth Date"
                 valueFormat="DD/MM/YYYY"
                 placeholder="DD/MM/YYYY"
+                required={questionItem.isRequired}
                 onChange={(e) => {
                   if (!e) {
                     return;
@@ -163,10 +148,10 @@ const TrackingQuestion = () => {
               />
             ) : (
               <NumberInput
-                label="Age"
                 placeholder="Age"
                 allowDecimal={false}
                 allowNegative={false}
+                required={questionItem.isRequired}
                 onChange={(e) => {
                   if (!e) {
                     return;
@@ -188,14 +173,16 @@ const TrackingQuestion = () => {
   };
 
   return (
-    <div className="flex flex-col justify-center items-center w-full mt-20 pb-10">
+    <div className="flex flex-col items-center w-full mt-20">
       {trackingQuestion && (
         <form
-          onSubmit={form.onSubmit((values) => console.log("res: ", values))}
+          onSubmit={form.onSubmit((values: FormValue) =>
+            onSubmitHandler(values)
+          )}
         >
           {form.values.questions.length > 0 &&
-            form.values.questions.map((item: TrackingQuestionType) => (
-              <div key={item.ordinal} className="text-left pb-8">
+            form.values.questions.map((item: Question) => (
+              <div key={item.ordinal} className="pb-5">
                 {renderQuestion(item)}
               </div>
             ))}
@@ -207,4 +194,4 @@ const TrackingQuestion = () => {
     </div>
   );
 };
-export default TrackingQuestion;
+export default QuestionItem;
