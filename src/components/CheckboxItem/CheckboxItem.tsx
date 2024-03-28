@@ -1,65 +1,23 @@
-import { Button, Checkbox, LoadingOverlay } from "@mantine/core";
+import { Button, Checkbox } from "@mantine/core";
 import { useListState } from "@mantine/hooks";
 import { useEffect, useState } from "react";
-import { useQuery } from "react-query";
+import { CheckboxOption, CheckboxItemProps } from "./interface/CheckboxItem";
 
-interface UrgentCheckboxProps {
-  onSubmit: (selectedOption: ResponseType[]) => void;
-  onBack: () => void;
-  animalId: number;
-}
-
-interface UrgentType {
-  urgentId: number;
-  urgentName: string;
-  urgencyId: number;
-}
-
-export interface ResponseType {
-  urgentId: number;
-  urgencyId: number;
-}
-
-interface UrgentOption {
-  urgent: UrgentType;
-  checked: boolean;
-  key: string;
-}
-
-const UrgentCheckbox: React.FC<UrgentCheckboxProps> = ({
-  animalId,
+const CheckboxItem: React.FC<CheckboxItemProps> = ({
+  optionList,
   onSubmit,
   onBack,
+  title,
 }) => {
-  const [option, optionHandlers] = useListState<UrgentOption>([]);
+  const [option, optionHandlers] = useListState<CheckboxOption>([]);
   const [isNone, setNone] = useState(false);
 
-  const { isLoading } = useQuery({
-    queryKey: ["urgentCases"],
-    queryFn: async () =>
-      fetch(`http://localhost:8000/urgent_cases/animal/${animalId}`).then(
-        (res) =>
-          res
-            .json()
-            .then((data) =>
-              data.map((value: UrgentType, index: number) => ({
-                urgent: value,
-                checked: false,
-                urgencyId: value.urgencyId,
-                key: index,
-              }))
-            )
-            .then((data) => optionHandlers.setState(data))
-      ),
-  });
+  useEffect(() => {
+    optionHandlers.setState(optionList);
+  }, [optionList]);
 
   const handleSubmit = () => {
-    const selectedOption = option
-      .filter((item) => item.checked)
-      .map((value) => ({
-        urgentId: value.urgent.urgentId,
-        urgencyId: value.urgent.urgencyId,
-      }));
+    const selectedOption = option.filter((item) => item.checked);
 
     if (selectedOption.length > 0 || isNone) {
       onSubmit(selectedOption);
@@ -75,22 +33,16 @@ const UrgentCheckbox: React.FC<UrgentCheckboxProps> = ({
     }
   }, [option]);
 
-  if (isLoading) {
-    return <LoadingOverlay visible>Loading...</LoadingOverlay>;
-  }
-
   return (
     <>
-      <div className="font-medium text-xl pb-4 pt-20">
-        โปรดเลือกอาการฉุกเฉินที่พบในสัตว์เลี้ยงของคุณ
-      </div>
+      <div className="font-medium text-xl pb-4 pt-20">{title}</div>
       {option.map((value, index) => (
         <Checkbox
           size="md"
           className="p-4"
           color="green"
-          key={value.key}
-          label={value.urgent.urgentName}
+          key={index}
+          label={value.label}
           checked={value.checked}
           onChange={(event) => {
             optionHandlers.setItemProp(
@@ -139,4 +91,4 @@ const UrgentCheckbox: React.FC<UrgentCheckboxProps> = ({
   );
 };
 
-export default UrgentCheckbox;
+export default CheckboxItem;

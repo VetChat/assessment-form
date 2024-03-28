@@ -1,14 +1,25 @@
 import { useEffect, useState } from "react";
 import AnimalSelector from "../../components/AnimalSelector/AnimalSelector";
-import UrgentCheckbox, {
-  ResponseType,
-} from "../../components/UrgentCheckbox/UrgentCheckbox";
-import { Answer, AnswerResponse, Step, Ticket } from "./Interface/Home.ts";
+import CheckboxItem from "../../components/CheckboxItem/CheckboxItem.tsx";
+import {
+  FormAnswer,
+  AnswerResponse,
+  Step,
+  Symptom,
+  Ticket,
+  WarningRes,
+} from "./Interface/Home.ts";
 import axios from "axios";
 import { CiWarning } from "react-icons/ci";
 import QuestionItem from "../../components/QuestionItem/QuestionItem.tsx";
-import { useMutation } from "react-query";
-import { FormValue } from "../../components/QuestionItem/interface/QuestionItem";
+import { useMutation, useQuery } from "react-query";
+import {
+  FormValue,
+  Question,
+} from "../../components/QuestionItem/interface/QuestionItem";
+import { CheckboxOption } from "../../components/CheckboxItem/interface/CheckboxItem.ts";
+import { UrgentCase } from "./Interface/Home";
+import { LoadingOverlay } from "@mantine/core";
 
 interface WarningType {
   urgencyDetail: string;
@@ -20,8 +31,9 @@ const Home = () => {
   const [stepNumber, setStepNumber] = useState(Step.choosePet);
   const [warning, setWarning] = useState<WarningType | null>(null);
   const [ticketId, setTicketId] = useState<number>();
+  const [QA, setQA] = useState<Question[]>([]);
 
-  const { mutate } = useMutation({
+  const ticket = useMutation({
     mutationFn: (answer: AnswerResponse) =>
       fetch("http://localhost:8000/tickets", {
         method: "POST",
@@ -32,6 +44,68 @@ const Home = () => {
         .then((ticket: Ticket) => setTicketId(ticket.ticketId)),
   });
 
+  const trackingQuestion = useQuery<Question[]>({
+    queryKey: ["trackingQuestion"],
+    queryFn: () =>
+      fetch("http://localhost:8000/ticket_questions").then((res) => res.json()),
+  });
+
+  const urgentCases = useQuery<UrgentCase[]>({
+    queryKey: ["urgentCases"],
+    queryFn: () =>
+      fetch(`http://localhost:8000/urgent_cases/animal/${animalId}`).then(
+        (res) => res.json()
+      ),
+    enabled: !!animalId,
+  });
+
+  const symptoms = useQuery<Symptom[]>({
+    queryKey: ["symptoms"],
+    queryFn: () =>
+      fetch(`http://localhost:8000/symptoms/animal/${animalId}`).then((res) =>
+        res.json()
+      ),
+    enabled: !!animalId && stepNumber === Step.chooseSymptom,
+  });
+
+  const questionSet = useMutation({
+    mutationKey: ["questionSet"],
+    mutationFn: (
+      question: {
+        questionSetId: number;
+      }[]
+    ) =>
+      fetch(`http://localhost:8000/questions/question_set_ids`, {
+        method: "POST",
+        body: JSON.stringify(question),
+        headers: { "Content-Type": "application/json; charset=UTF-8" },
+      }).then((res) => res.json()),
+  });
+
+  const mapUrgentToOption = (value: UrgentCase[] | undefined) => {
+    if (!value) {
+      return;
+    }
+    const option: CheckboxOption[] = value.map((item) => ({
+      id: item.urgentId,
+      label: item.urgentName,
+      checked: false,
+    }));
+    return option;
+  };
+
+  const mapSymptomtoOption = (value: Symptom[] | undefined) => {
+    if (!value) {
+      return;
+    }
+    const option: CheckboxOption[] = value.map((item) => ({
+      id: item.questionSetId,
+      label: item.symptomName,
+      checked: false,
+    }));
+    return option;
+  };
+
   const handleSelectAnimal = (id: number | undefined) => {
     if (id) {
       setAnimalId(id);
@@ -39,25 +113,45 @@ const Home = () => {
     }
   };
 
-  const handleSelectUrgent = (selectedOption: ResponseType[]) => {
+  const handleSelectUrgent = (selectedOption: CheckboxOption[]) => {
+    const selectedId = selectedOption.map((item) => item.id);
+    const filtered = urgentCases.data!.filter((item) =>
+      selectedId.includes(item.urgentId)
+    );
+
+    const resposeBody: WarningRes[] = filtered.map((item) => ({
+      urgencyId: item.urgencyId,
+      urgentId: item.urgentId,
+    }));
+
     const fetchData = async () => {
       try {
         const response = await axios.post(
           "http://localhost:8000/urgency/most_urgent",
-          selectedOption
+          resposeBody
         );
         return response.data;
-      } catch (error) {
-        console.error("Error fetching warning:", error);
-      }
+      } catch (error) {}
     };
     if (selectedOption.length > 0) {
       setStepNumber(Step.done);
       const urgencyWarning = fetchData();
       urgencyWarning.then((warn) => setWarning(warn));
     } else if (selectedOption.length === 0) {
-      setStepNumber(Step.answerQuestion);
+      setStepNumber(Step.tracking);
     }
+  };
+
+  const handleSelectSymptom = async (selectedOption: CheckboxOption[]) => {
+    if (selectedOption.length === 0) {
+      alert("Please contact vet");
+      return;
+    }
+    const responseBody = selectedOption.map((item) => ({
+      questionSetId: item.id,
+    }));
+    questionSet.mutateAsync(responseBody).then((res: Question[]) => setQA(res));
+    setStepNumber(Step.answerQuestion);
   };
 
   const handleBack = () => {
@@ -67,7 +161,7 @@ const Home = () => {
   };
 
   const mapFormToAnswer = (formValue: FormValue) => {
-    const ans: Answer[] = [];
+    const ans: FormAnswer[] = [];
     for (const key in formValue.answerList) {
       ans.push({
         questionId: parseInt(key),
@@ -79,10 +173,15 @@ const Home = () => {
 
   const handleSubmitHistory = (value: FormValue) => {
     const answerList = mapFormToAnswer(value);
-    mutate({
+    ticket.mutate({
       animalId: animalId!,
       listAnswer: answerList,
     });
+    setStepNumber(Step.chooseSymptom);
+  };
+
+  const handleSubmitQuestionSet = (value: FormValue) => {
+    console.log("questionSetAnswer: ", value);
   };
 
   useEffect(() => {
@@ -112,15 +211,39 @@ const Home = () => {
       )}
       {stepNumber === Step.chooseUrgent && (
         <div>
-          <UrgentCheckbox
-            onSubmit={handleSelectUrgent}
+          {urgentCases.isLoading ? (
+            <LoadingOverlay visible>Loading...</LoadingOverlay>
+          ) : (
+            <CheckboxItem
+              title="โปรดเลือกอาการฉุกเฉินที่พบในสัตว์เลี้ยงของคุณ"
+              optionList={mapUrgentToOption(urgentCases.data) ?? []}
+              onSubmit={handleSelectUrgent}
+              onBack={handleBack}
+            />
+          )}
+        </div>
+      )}
+      {stepNumber === Step.tracking && (
+        <QuestionItem
+          onSubmitHandler={handleSubmitHistory}
+          questionList={trackingQuestion?.data}
+        />
+      )}
+      {stepNumber === Step.chooseSymptom && (
+        <div>
+          <CheckboxItem
+            title="โปรดระบุอาการที่พบ"
+            optionList={mapSymptomtoOption(symptoms.data) ?? []}
+            onSubmit={handleSelectSymptom}
             onBack={handleBack}
-            animalId={animalId!}
           />
         </div>
       )}
-      {stepNumber === Step.answerQuestion && (
-        <QuestionItem onSubmitHandler={handleSubmitHistory} />
+      {stepNumber === Step.answerQuestion && QA && (
+        <QuestionItem
+          questionList={QA}
+          onSubmitHandler={handleSubmitQuestionSet}
+        />
       )}
       {/* <ProgressBar active={stepNumber} /> */}
     </div>
