@@ -4,7 +4,7 @@ import { useQuery } from "react-query";
 
 interface Animal {
   animalId: number;
-  name: string;
+  animalName: string;
 }
 
 interface AnimalSelectorProps {
@@ -27,19 +27,20 @@ const AnimalSelector: React.FC<AnimalSelectorProps> = ({ onSubmit }) => {
   });
 
   const shouldFilterOptions =
-    Array.isArray(animals) && animals.every((item) => item.name !== search);
+    Array.isArray(animals) &&
+    animals.every((item) => item.animalName !== search);
 
   const filteredOptions = shouldFilterOptions
     ? animals?.filter((item) =>
-        item.name.toLowerCase().includes(search.toLowerCase().trim())
+        item.animalName.toLowerCase().includes(search.toLowerCase().trim())
       )
     : animals;
 
   const options =
     Array.isArray(filteredOptions) &&
     filteredOptions.map((animal) => (
-      <Combobox.Option key={animal.animalId} value={animal.name}>
-        {animal.name}
+      <Combobox.Option key={animal.animalId} value={animal.animalName}>
+        {animal.animalName}
       </Combobox.Option>
     ));
 
@@ -88,7 +89,9 @@ const AnimalSelector: React.FC<AnimalSelectorProps> = ({ onSubmit }) => {
           color="teal"
           variant="light"
           onClick={() =>
-            onSubmit(animals?.find((animal) => animal.name == value)?.animalId)
+            onSubmit(
+              animals?.find((animal) => animal.animalName == value)?.animalId
+            )
           }
           className="mt-10"
           disabled={!value}
