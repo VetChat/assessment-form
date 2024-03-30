@@ -16,6 +16,7 @@ import { useMutation, useQuery } from "react-query";
 import {
   FormValue,
   Question,
+  QuestionSet,
 } from "../../components/QuestionItem/interface/QuestionItem";
 import { CheckboxOption } from "../../components/CheckboxItem/interface/CheckboxItem.ts";
 import { UrgentCase } from "./Interface/Home";
@@ -31,7 +32,7 @@ const Home = () => {
   const [stepNumber, setStepNumber] = useState(Step.choosePet);
   const [warning, setWarning] = useState<WarningType | null>(null);
   const [ticketId, setTicketId] = useState<number>();
-  const [QA, setQA] = useState<Question[]>([]);
+  const [QA, setQA] = useState<QuestionSet[]>([]);
 
   const ticket = useMutation({
     mutationFn: (answer: AnswerResponse) =>
@@ -150,7 +151,9 @@ const Home = () => {
     const responseBody = selectedOption.map((item) => ({
       questionSetId: item.id,
     }));
-    questionSet.mutateAsync(responseBody).then((res: Question[]) => setQA(res));
+    questionSet
+      .mutateAsync(responseBody)
+      .then((res: QuestionSet[]) => setQA(res));
     setStepNumber(Step.answerQuestion);
   };
 
@@ -226,7 +229,7 @@ const Home = () => {
       {stepNumber === Step.tracking && (
         <QuestionItem
           onSubmitHandler={handleSubmitHistory}
-          questionList={trackingQuestion?.data}
+          questionSet={[{ listQuestion: trackingQuestion?.data! }]}
         />
       )}
       {stepNumber === Step.chooseSymptom && (
@@ -241,7 +244,8 @@ const Home = () => {
       )}
       {stepNumber === Step.answerQuestion && QA && (
         <QuestionItem
-          questionList={QA}
+          isQA={true}
+          questionSet={QA}
           onSubmitHandler={handleSubmitQuestionSet}
         />
       )}
