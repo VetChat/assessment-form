@@ -1,7 +1,5 @@
 import { useForm } from "@mantine/form";
-import { Button, Group, NumberInput, Radio, TextInput } from "@mantine/core";
-import { DateInput } from "@mantine/dates";
-import dayjs from "dayjs";
+import { Button, Group } from "@mantine/core";
 import { useEffect, useState } from "react";
 import {
   FormValue,
@@ -20,6 +18,8 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
   const [currentQuestion, setCurrentQuestion] = useState<Question[]>([]);
   const [isFirst, setIsFirst] = useState<boolean>(true);
   const [isLast, setIsLast] = useState<boolean>(false);
+
+  // const [isGoingBack, setIsGoingBack] = useState<boolean>(false);
 
   const form = useForm({
     initialValues: {
@@ -103,36 +103,64 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
     }
   }, [questionSet]);
 
-  useEffect(() => {
-    const isFirstGroup = currentGroup === groupList[0];
-    const isLastGroup = currentGroup === groupList[groupList.length - 1];
-    setIsFirst(isFirstGroup);
-    setIsLast(isLastGroup);
+  const checkPosition = () => {
+    const nextQuestion = form.values.questions.find(
+      (question) =>
+        question.group! > currentGroup && question.skippedFrom?.length === 0
+    );
+    let i = currentGroup - 1;
+    let previousQuestion = undefined;
+    for (i; i >= groupList[0]; i--) {
+      const temp = form.values.questions.find(
+        (question) =>
+          question.group! === i && question.skippedFrom?.length === 0
+      );
+      if (temp) {
+        previousQuestion = temp;
+        break;
+      }
+    }
+    // console.log("next: ", nextQuestion, " prev: ", previousQuestion);
 
+    return [previousQuestion, nextQuestion];
+  };
+
+  useEffect(() => {
+    const pointer = checkPosition();
+    setIsFirst(pointer[0] ? false : true);
+    setIsLast(pointer[1] ? false : true);
+
+    // console.log("currentGroup: ", currentGroup);
     const questions = form.values.questions.filter(
       (question) =>
         question.group === currentGroup && question.skippedFrom?.length === 0
     );
-
-    console.log("current question: ", questions);
-    console.log("form: ", form.values);
     setCurrentQuestion(questions);
   }, [currentGroup]);
+
+  const showNextQuestion = (isGoingBack: boolean) => {
+    const pointer = checkPosition();
+    if (isGoingBack) {
+      // console.log("nextGroup: ", pointer[0]!.group!);
+      pointer[0] && setCurrentGroup(pointer[0].group!);
+    } else {
+      // console.log("nextGroup: ", pointer[1]!.group!);
+      pointer[1] && setCurrentGroup(pointer[1].group!);
+    }
+  };
 
   const handleSubmitQA = () => {
     return;
   };
 
-  const RenderButton: React.FC = () => {
+  const renderButton = () => {
     if (isQA) {
-      console.log("isLast: ", isLast);
       const nextButton = !isLast ? (
         <Button
           onClick={() => {
-            // form.validate();
             if (form.isValid()) {
-              console.log("isValid: ", form.isValid());
-              setCurrentGroup(currentGroup + 1);
+              console.log("Valid: ", form.isValid());
+              showNextQuestion(false);
             }
           }}
         >
@@ -151,7 +179,13 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
         </Button>
       );
       const backButton = !isFirst && (
-        <button onClick={() => setCurrentGroup(currentGroup - 1)}>Back</button>
+        <Button
+          onClick={() => {
+            showNextQuestion(true);
+          }}
+        >
+          Back
+        </Button>
       );
       return (
         <Group className="flex justify-between">
@@ -186,7 +220,7 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
                   <RenderQuestion questionItem={questionItem} form={form} />
                 </div>
               ))}
-          <RenderButton />
+          {renderButton()}
         </form>
       )}
     </div>

@@ -45,7 +45,7 @@ export const RenderQuestion: React.FC<RenderQuestionProps> = ({
                     if (!questionItem.ordinal) {
                       return;
                     }
-                    if (choice.skipToQuestion) {
+                    if (choice.skipToQuestion && choice.skipToQuestion != 999) {
                       const skipToQuestionIndex =
                         choice.skipToQuestion -
                         questionItem.ordinal +
@@ -55,28 +55,35 @@ export const RenderQuestion: React.FC<RenderQuestionProps> = ({
                         i < skipToQuestionIndex;
                         i++
                       ) {
-                        console.log(
-                          "Question ",
-                          i,
-                          ": ",
-                          form.values.questions[i].skippedFrom
-                        );
                         const skippedFrom = [
                           ...(form.values.questions[i].skippedFrom || []),
                           questionItem.ordinal,
                         ];
                         console.log("skippedFrom: ", skippedFrom);
-                        // form.setFieldValue(
-                        //   `questions[${i}].skippedFrom`,
-                        //   skippedFrom
-                        // );
                         form.setFieldValue(
                           `questions.${i}.skippedFrom`,
                           skippedFrom
                         );
                       }
+                    } else if (choice.skipToQuestion === 999) {
+                      form.values.questions
+                        .filter(
+                          (question) =>
+                            question.group === questionItem.group &&
+                            question.ordinal! > questionItem.ordinal!
+                        )
+                        .map((item) => {
+                          form.setFieldValue(
+                            `questions.${item.questionIndex}.skippedFrom`,
+                            [
+                              ...(form.values.questions[item.questionIndex!]
+                                .skippedFrom || []),
+                              questionItem.ordinal,
+                            ]
+                          );
+                        });
                     } else if (choice.skipToQuestion === null) {
-                      form.values.questions.forEach(
+                      form.values.questions.map(
                         (q: Question, index: number) => {
                           if (
                             q.skippedFrom &&
