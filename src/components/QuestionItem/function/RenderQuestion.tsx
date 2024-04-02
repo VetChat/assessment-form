@@ -57,7 +57,7 @@ export const RenderQuestion: React.FC<RenderQuestionProps> = ({
                       ) {
                         const skippedFrom = [
                           ...(form.values.questions[i].skippedFrom || []),
-                          questionItem.ordinal,
+                          questionItem.questionId,
                         ];
                         console.log("skippedFrom: ", skippedFrom);
                         form.setFieldValue(
@@ -78,7 +78,7 @@ export const RenderQuestion: React.FC<RenderQuestionProps> = ({
                             [
                               ...(form.values.questions[item.questionIndex!]
                                 .skippedFrom || []),
-                              questionItem.ordinal,
+                              questionItem.questionId,
                             ]
                           );
                         });
@@ -87,11 +87,11 @@ export const RenderQuestion: React.FC<RenderQuestionProps> = ({
                         (q: Question, index: number) => {
                           if (
                             q.skippedFrom &&
-                            q.skippedFrom.includes(questionItem.ordinal!)
+                            q.skippedFrom.includes(questionItem.questionId!)
                           ) {
                             const updatedSkippedFrom = q.skippedFrom.filter(
-                              (ordinal: number) =>
-                                ordinal !== questionItem.ordinal
+                              (skipFrom: number) =>
+                                skipFrom !== questionItem.questionId
                             );
                             form.setFieldValue(
                               `questions.${index}.skippedFrom`,
