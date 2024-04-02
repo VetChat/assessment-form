@@ -31,6 +31,7 @@ export interface Answer {
 }
 
 export interface QuestionItemProps {
+  title: string;
   onSubmitHandler: (formValue: FormValue) => void;
   questionSet: QuestionSet[] | undefined;
   isQA?: boolean;

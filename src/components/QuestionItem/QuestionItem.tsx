@@ -7,8 +7,11 @@ import {
   QuestionItemProps,
 } from "./interface/QuestionItem";
 import { RenderQuestion } from "./function/RenderQuestion";
+import { IoReturnDownBack } from "react-icons/io5";
+import Swal from "sweetalert2";
 
 const QuestionItem: React.FC<QuestionItemProps> = ({
+  title,
   onSubmitHandler,
   questionSet,
   isQA = false,
@@ -18,8 +21,6 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
   const [currentQuestion, setCurrentQuestion] = useState<Question[]>([]);
   const [isFirst, setIsFirst] = useState<boolean>(true);
   const [isLast, setIsLast] = useState<boolean>(false);
-
-  // const [isGoingBack, setIsGoingBack] = useState<boolean>(false);
 
   const form = useForm({
     initialValues: {
@@ -64,7 +65,6 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
             question.group = groupNumber;
             group.push(groupNumber);
             groupNumber++;
-            console.log(question.question, "has skip, group: ", question.group);
           } else {
             question.group = groupNumber;
           }
@@ -77,8 +77,6 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
       questionSet.forEach((symptom) => {
         allQuestions.push(...symptom.listQuestion);
       });
-
-      console.log(allQuestions);
 
       form.setValues({
         questions: allQuestions,
@@ -104,6 +102,31 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
   }, [questionSet]);
 
   const checkPosition = () => {
+    {
+      /*
+    1. Set answer of the skipped function to ""
+    2. Remove the skipped status of the question that got skipped by skipped question
+
+    Returns: (Array) containing previous question and next question
+    */
+    }
+    const skippedQuestionId = form.values.questions.filter(
+      (question) => question.skippedFrom?.length! > 0
+    );
+    skippedQuestionId.map((question) => {
+      form.values.questions
+        .filter((item) => item.skippedFrom?.includes(question.questionId))
+        .map((questionItem) => {
+          const newSkippedFrom = questionItem.skippedFrom?.filter(
+            (skippedFrom) => skippedFrom !== question.questionId
+          );
+          form.setFieldValue(
+            `questions.${questionItem.questionIndex}.skippedFrom`,
+            newSkippedFrom
+          );
+        });
+      form.setFieldValue(`answerList.${question.questionId}`, "");
+    });
     const nextQuestion = form.values.questions.find(
       (question) =>
         question.group! > currentGroup && question.skippedFrom?.length === 0
@@ -120,7 +143,6 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
         break;
       }
     }
-    // console.log("next: ", nextQuestion, " prev: ", previousQuestion);
 
     return [previousQuestion, nextQuestion];
   };
@@ -130,7 +152,6 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
     setIsFirst(pointer[0] ? false : true);
     setIsLast(pointer[1] ? false : true);
 
-    // console.log("currentGroup: ", currentGroup);
     const questions = form.values.questions.filter(
       (question) =>
         question.group === currentGroup && question.skippedFrom?.length === 0
@@ -141,74 +162,26 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
   const showNextQuestion = (isGoingBack: boolean) => {
     const pointer = checkPosition();
     if (isGoingBack) {
-      // console.log("nextGroup: ", pointer[0]!.group!);
       pointer[0] && setCurrentGroup(pointer[0].group!);
     } else {
-      // console.log("nextGroup: ", pointer[1]!.group!);
       pointer[1] && setCurrentGroup(pointer[1].group!);
     }
   };
 
   const handleSubmitQA = () => {
-    return;
-  };
-
-  const renderButton = () => {
-    if (isQA) {
-      const nextButton = !isLast ? (
-        <Button
-          onClick={() => {
-            if (form.isValid()) {
-              console.log("Valid: ", form.isValid());
-              showNextQuestion(false);
-            }
-          }}
-        >
-          Next
-        </Button>
-      ) : (
-        // TODO: when submit
-        // 1. Clear all answer of the skipped question
-        // 2. Set all isRequired of the skipped question to false
-        // 3. Submit
-        <Button
-          // onClick={() => console.log("Submit hit!, form values: ", form.values)}
-          type="submit"
-        >
-          Submit
-        </Button>
-      );
-      const backButton = !isFirst && (
-        <Button
-          onClick={() => {
-            showNextQuestion(true);
-          }}
-        >
-          Back
-        </Button>
-      );
-      return (
-        <Group className="flex justify-between">
-          {backButton}
-          {nextButton}
-        </Group>
-      );
-    }
-    return (
-      <Group justify="flex-end" mt="md">
-        <Button type="submit">Submit</Button>
-      </Group>
-    );
+    onSubmitHandler(form.values);
   };
 
   return (
-    <div className="flex flex-col items-center w-full mt-20">
+    <div className="flex flex-col w-full items-center mt-20">
       {questionSet && (
         <form
+          className="flex flex-col justify-center w-[350px]"
           onSubmit={form.onSubmit((values: FormValue) =>
             onSubmitHandler(values)
           )}
         >
+          <div className="font-medium text-xl pb-4">{title}</div>
           {form.values.questions.length > 0 && !isQA
             ? form.values.questions.map((item: Question, index: number) => (
                 <div key={index} className="pb-5">
@@ -216,11 +189,54 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
                 </div>
               ))
             : currentQuestion.map((questionItem) => (
-                <div key={questionItem.questionId} className="pb-5">
+                <div key={questionItem.questionId} className="pb-5 w-full">
                   <RenderQuestion questionItem={questionItem} form={form} />
                 </div>
               ))}
-          {renderButton()}
+          {!isQA ? (
+            <Group justify="flex-end" mt="md">
+              <Button type="submit">Submit</Button>
+            </Group>
+          ) : (
+            <div className="flex w-full justify-between pt-4">
+              {isFirst ? (
+                <Button leftSection={<IoReturnDownBack size={14} />}>
+                  กลับไปหน้าเลือกอาการ
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => {
+                    showNextQuestion(true);
+                  }}
+                >
+                  Back
+                </Button>
+              )}
+              {isLast ? (
+                <Button onClick={() => handleSubmitQA()}>Submit</Button>
+              ) : (
+                <Button
+                  onClick={() => {
+                    const isGroupComplete = currentQuestion.every(
+                      (question) =>
+                        form.values.answerList[question.questionId] !== ""
+                    );
+                    if (!isGroupComplete) {
+                      Swal.fire({
+                        title: "ข้อมูลไม่ครบ",
+                        html: "กรุณากรอกข้อมูลให้ครบถ้วนก่อนไปหน้าถัดไป",
+                        icon: "error",
+                      });
+                      return;
+                    }
+                    showNextQuestion(false);
+                  }}
+                >
+                  Next
+                </Button>
+              )}
+            </div>
+          )}
         </form>
       )}
     </div>

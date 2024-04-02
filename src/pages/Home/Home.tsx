@@ -8,6 +8,8 @@ import {
   Symptom,
   Ticket,
   WarningRes,
+  AnswerRecord,
+  UrgentCase,
 } from "./Interface/Home.ts";
 import axios from "axios";
 import { CiWarning } from "react-icons/ci";
@@ -19,8 +21,8 @@ import {
   QuestionSet,
 } from "../../components/QuestionItem/interface/QuestionItem";
 import { CheckboxOption } from "../../components/CheckboxItem/interface/CheckboxItem.ts";
-import { UrgentCase } from "./Interface/Home";
 import { LoadingOverlay } from "@mantine/core";
+import Swal from "sweetalert2";
 
 interface WarningType {
   urgencyDetail: string;
@@ -79,6 +81,16 @@ const Home = () => {
       fetch(`http://localhost:8000/questions/question_set_ids`, {
         method: "POST",
         body: JSON.stringify(question),
+        headers: { "Content-Type": "application/json; charset=UTF-8" },
+      }).then((res) => res.json()),
+  });
+
+  const answerRecord = useMutation({
+    mutationKey: ["answerRecord"],
+    mutationFn: (data: AnswerRecord) =>
+      fetch(`http://localhost:8000/answer_records`, {
+        method: "POST",
+        body: JSON.stringify(data),
         headers: { "Content-Type": "application/json; charset=UTF-8" },
       }).then((res) => res.json()),
   });
@@ -183,8 +195,24 @@ const Home = () => {
     setStepNumber(Step.chooseSymptom);
   };
 
-  const handleSubmitQuestionSet = (value: FormValue) => {
-    console.log("questionSetAnswer: ", value);
+  const handleSubmitQuestionSet = (formValue: FormValue) => {
+    console.log("questionSetAnswer: ", formValue);
+    const answer = [];
+    for (let key in formValue.answerList) {
+      answer.push({ answerId: parseInt(formValue.answerList[key]) });
+    }
+    const recordData: AnswerRecord = {
+      ticketId: ticketId!,
+      listAnswer: answer,
+    };
+
+    answerRecord.mutateAsync(recordData).then((res) =>
+      Swal.fire({
+        icon: "success",
+        title: "success",
+        html: res.message!,
+      })
+    );
   };
 
   useEffect(() => {
@@ -228,6 +256,7 @@ const Home = () => {
       )}
       {stepNumber === Step.tracking && (
         <QuestionItem
+          title="กรอกประวัติสัตว์เลี้ยง"
           onSubmitHandler={handleSubmitHistory}
           questionSet={[{ listQuestion: trackingQuestion?.data! }]}
         />
@@ -244,6 +273,7 @@ const Home = () => {
       )}
       {stepNumber === Step.answerQuestion && QA && (
         <QuestionItem
+          title="ระบุอาการสัตว์เลี้ยง"
           isQA={true}
           questionSet={QA}
           onSubmitHandler={handleSubmitQuestionSet}

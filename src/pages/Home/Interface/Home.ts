@@ -41,3 +41,10 @@ export interface Symptom {
   symptomName: string;
   questionSetId: number;
 }
+
+export interface AnswerRecord {
+  ticketId: number;
+  listAnswer: {
+    answerId: number;
+  }[];
+}
