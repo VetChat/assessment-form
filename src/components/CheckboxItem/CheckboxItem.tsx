@@ -2,6 +2,8 @@ import { Button, Checkbox } from "@mantine/core";
 import { useListState } from "@mantine/hooks";
 import { useEffect, useState } from "react";
 import { CheckboxOption, CheckboxItemProps } from "./interface/CheckboxItem";
+import { IoReturnDownBack } from "react-icons/io5";
+import { GrFormNext } from "react-icons/gr";
 
 const CheckboxItem: React.FC<CheckboxItemProps> = ({
   optionList,
@@ -70,6 +72,7 @@ const CheckboxItem: React.FC<CheckboxItemProps> = ({
       />
       <div className="flex w-full justify-between">
         <Button
+          leftSection={<IoReturnDownBack size={14} />}
           color="red"
           variant="outline"
           className="mt-10"
@@ -78,6 +81,7 @@ const CheckboxItem: React.FC<CheckboxItemProps> = ({
           Back
         </Button>
         <Button
+          rightSection={<GrFormNext size={14} />}
           disabled={!(option.some((value) => value.checked) || isNone)}
           color="teal"
           variant="light"

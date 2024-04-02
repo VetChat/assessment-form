@@ -1,5 +1,6 @@
 import { Button, Combobox, InputBase, useCombobox } from "@mantine/core";
 import React, { useState } from "react";
+import { GrFormNext } from "react-icons/gr";
 import { useQuery } from "react-query";
 
 interface Animal {
@@ -86,6 +87,7 @@ const AnimalSelector: React.FC<AnimalSelectorProps> = ({ onSubmit }) => {
       </Combobox>
       <div className="flex w-full justify-end">
         <Button
+          rightSection={<GrFormNext size={14} />}
           color="teal"
           variant="light"
           onClick={() =>
