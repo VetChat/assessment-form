@@ -56,7 +56,7 @@ const Home = () => {
   const urgentCases = useQuery<UrgentCase[]>({
     queryKey: ["urgentCases"],
     queryFn: () =>
-      fetch(`http://localhost:8000/urgent_cases/animal/${animalId}`).then(
+      fetch(`http://localhost:8000/animal/${animalId}/urgent_cases`).then(
         (res) => res.json()
       ),
     enabled: !!animalId,
