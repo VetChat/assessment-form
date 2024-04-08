@@ -12,9 +12,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <div className="h-full w-full">
         <NavigationBar />
         {children}
-        <footer>
-          <ProgressBar active={0}></ProgressBar>
-        </footer>
+        <footer>{/* <ProgressBar active={0}></ProgressBar> */}</footer>
       </div>
     </div>
   );
