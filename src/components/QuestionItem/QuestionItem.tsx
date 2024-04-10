@@ -190,6 +190,9 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
               ))
             : currentQuestion.map((questionItem) => (
                 <div key={questionItem.questionId} className="pb-5 w-full">
+                  {questionItem.imagePath && (
+                    <img src={questionItem.imagePath} alt="image" />
+                  )}
                   <RenderQuestion questionItem={questionItem} form={form} />
                 </div>
               ))}
@@ -198,7 +201,7 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
               <Button type="submit">Submit</Button>
             </Group>
           ) : (
-            <div className="flex w-full justify-between pt-4">
+            <div className="flex w-full justify-between pt-4 pb-10">
               {isFirst ? (
                 <Button leftSection={<IoReturnDownBack size={14} />}>
                   กลับไปหน้าเลือกอาการ
@@ -217,6 +220,8 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
               ) : (
                 <Button
                   onClick={() => {
+                    console.log("formValue: ", form.values);
+
                     const isGroupComplete = currentQuestion.every(
                       (question) =>
                         form.values.answerList[question.questionId] !== ""

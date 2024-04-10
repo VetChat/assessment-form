@@ -70,7 +70,7 @@ const CheckboxItem: React.FC<CheckboxItemProps> = ({
           setNone(!isNone);
         }}
       />
-      <div className="flex w-full justify-between">
+      <div className="flex w-full justify-between pb-10">
         <Button
           leftSection={<IoReturnDownBack size={14} />}
           color="red"

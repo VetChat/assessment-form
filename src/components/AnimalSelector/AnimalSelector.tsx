@@ -2,6 +2,7 @@ import { Button, Combobox, InputBase, useCombobox } from "@mantine/core";
 import React, { useState } from "react";
 import { GrFormNext } from "react-icons/gr";
 import { useQuery } from "react-query";
+import { AnimalsService } from "../../client";
 
 interface Animal {
   animalId: number;
@@ -18,8 +19,7 @@ const AnimalSelector: React.FC<AnimalSelectorProps> = ({ onSubmit }) => {
 
   const { data: animals } = useQuery<Animal[]>({
     queryKey: ["animals"],
-    queryFn: () =>
-      fetch("http://localhost:8000/animals").then((res) => res.json()),
+    queryFn: () => AnimalsService.animalsGetAnimal(),
     staleTime: 60000,
   });
 

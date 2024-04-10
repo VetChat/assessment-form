@@ -16,18 +16,18 @@ export interface Question {
   questionIndex?: number;
   question: string;
   pattern: string;
-  imagePath?: string;
+  imagePath?: string | null;
   ordinal?: number;
-  listAnswer?: Answer[];
+  listAnswer?: Answer[] | null;
   isRequired?: boolean;
   skippedFrom?: number[];
   group?: number;
 }
 
 export interface Answer {
-  answerId: number;
-  answer: string;
-  skipToQuestion?: number;
+  answerId?: number | null;
+  answer?: string | null;
+  skipToQuestion?: number | null;
 }
 
 export interface QuestionItemProps {

@@ -22,25 +22,25 @@ export const RenderQuestion: React.FC<RenderQuestionProps> = ({
       );
     case "choice":
       if (questionItem.listAnswer) {
-        const answerId = form.values.answerList[questionItem.questionId];
+        const answer = form.values.answerList[questionItem.questionId];
         return (
           <Radio.Group
+            className="text-xl"
             label={questionItem.question}
             withAsterisk={questionItem.isRequired}
-            defaultValue={answerId}
+            defaultValue={answer}
           >
             <Group mt="xs">
               {questionItem.listAnswer.map((choice) => (
                 <Radio
                   required={questionItem.isRequired}
                   key={choice.answerId}
-                  value={choice.answerId.toString()}
+                  value={choice.answer!}
                   label={choice.answer}
-                  checked={answerId === choice.answerId.toString()}
                   onChange={() => {
                     form.setFieldValue(
                       `answerList.${questionItem.questionId}`,
-                      choice.answerId.toString()
+                      choice.answer
                     );
                     if (!questionItem.ordinal) {
                       return;

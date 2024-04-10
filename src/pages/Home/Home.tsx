@@ -23,6 +23,16 @@ import {
 import { CheckboxOption } from "../../components/CheckboxItem/interface/CheckboxItem.ts";
 import { LoadingOverlay } from "@mantine/core";
 import Swal from "sweetalert2";
+import {
+  AnswerRecordCreate,
+  AnswerRecordResponse,
+  AnswerRecordsService,
+  QuestionService,
+  QuestionSetService,
+  TicketQuestionsService,
+  TicketsService,
+  UrgentCasesService,
+} from "../../client/index.ts";
 
 interface WarningType {
   urgencyDetail: string;
@@ -38,27 +48,33 @@ const Home = () => {
 
   const ticket = useMutation({
     mutationFn: (answer: AnswerResponse) =>
-      fetch("http://localhost:8000/tickets", {
-        method: "POST",
-        body: JSON.stringify(answer),
-        headers: { "Content-type": "application/json; charset=UTF-8" },
-      })
-        .then((res) => res.json())
-        .then((ticket: Ticket) => setTicketId(ticket.ticketId)),
+      TicketsService.ticketsCreateTicket({ requestBody: answer }).then((res) =>
+        setTicketId(res.ticketId)
+      ),
   });
 
-  const trackingQuestion = useQuery<Question[]>({
+  const trackingQuestion = useQuery({
     queryKey: ["trackingQuestion"],
     queryFn: () =>
-      fetch("http://localhost:8000/ticket_questions").then((res) => res.json()),
+      TicketQuestionsService.ticketQuestionsGetTicketQuestions().then((res) => {
+        const data: Question[] = res.map((item) => ({
+          questionId: item.questionId,
+          question: item.question,
+          pattern: item.pattern,
+          ordinal: item.ordinal,
+          isRequired: item.isRequired,
+          listAnswer: item.listAnswer,
+        }));
+        return data;
+      }),
   });
 
   const urgentCases = useQuery<UrgentCase[]>({
-    queryKey: ["urgentCases"],
+    queryKey: ["urgentCases", animalId],
     queryFn: () =>
-      fetch(`http://localhost:8000/animal/${animalId}/urgent_cases`).then(
-        (res) => res.json()
-      ),
+      UrgentCasesService.urgentCasesGetUrgentCasesByAnimalId({
+        animalId: animalId!,
+      }),
     enabled: !!animalId,
   });
 
@@ -73,26 +89,16 @@ const Home = () => {
 
   const questionSet = useMutation({
     mutationKey: ["questionSet"],
-    mutationFn: (
-      question: {
-        questionSetId: number;
-      }[]
-    ) =>
-      fetch(`http://localhost:8000/questions/question_set_ids`, {
-        method: "POST",
-        body: JSON.stringify(question),
-        headers: { "Content-Type": "application/json; charset=UTF-8" },
-      }).then((res) => res.json()),
+    mutationFn: (question: { questionSetId: number }[]) =>
+      QuestionService.questionGetQuestionsBySetIds({ requestBody: question }),
   });
 
   const answerRecord = useMutation({
     mutationKey: ["answerRecord"],
-    mutationFn: (data: AnswerRecord) =>
-      fetch(`http://localhost:8000/answer_records`, {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json; charset=UTF-8" },
-      }).then((res) => res.json()),
+    mutationFn: (data: AnswerRecordCreate) =>
+      AnswerRecordsService.answerRecordsCreateAnswerRecords({
+        requestBody: data,
+      }),
   });
 
   const mapUrgentToOption = (value: UrgentCase[] | undefined) => {
@@ -199,37 +205,49 @@ const Home = () => {
     console.log("questionSetAnswer: ", formValue);
     const answer = [];
     for (let key in formValue.answerList) {
-      answer.push({ answerId: parseInt(formValue.answerList[key]) });
+      answer.push({
+        questionId: parseInt(key),
+        answer: formValue.answerList[key],
+      });
     }
-    const recordData: AnswerRecord = {
+
+    const recordData: AnswerRecordCreate = {
       ticketId: ticketId!,
       listAnswer: answer,
     };
 
-    answerRecord.mutateAsync(recordData).then((res) =>
-      Swal.fire({
-        icon: "success",
-        title: "success",
-        html: res.message!,
+    answerRecord
+      .mutateAsync(recordData)
+      .then((res: AnswerRecordResponse) => {
+        Swal.fire({
+          title: "Success",
+          text: "Your answer has been recorded",
+          icon: "success",
+          confirmButtonText: "Cool",
+        });
       })
-    );
+      .then(() => setStepNumber(Step.done));
   };
-
-  useEffect(() => {
-    console.log(ticketId);
-  }, [ticketId]);
 
   if (warning) {
     return (
-      <div className="flex flex-col pt-20 justify-center items-center">
-        <CiWarning className="text-red-400 text-9xl"></CiWarning>
-        <label className="text-[25px] font-semibold">
+      <div className="flex flex-col mt-40 justify-center items-center w-full">
+        <div className="flex gap-4 pb-10">
+          <img
+            className="h-20 w-20"
+            src="https://upload.wikimedia.org/wikipedia/th/thumb/5/51/Logo_ku_th.svg/1200px-Logo_ku_th.svg.png"
+          />
+          <img
+            className="h-20 w-20"
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRhkqA4g_kyg6siSXAzyxhOGw9Amn0ROsGLyPNXBt5Ug&s"
+            alt="Kasetsart Veterinary Hosipital"
+          />
+        </div>
+        <label className="text-[25px] text-red-700 font-semibold">
           {warning.urgencyDetail}
         </label>
         <br />
-        <label>
-          Please contact veterinary hospital within: {warning.duration}
-        </label>
+        <label>{warning.duration}</label>
         {/* <ProgressBar active={Step.done} /> */}
       </div>
     );
@@ -278,6 +296,15 @@ const Home = () => {
           questionSet={QA}
           onSubmitHandler={handleSubmitQuestionSet}
         />
+      )}
+      {stepNumber === Step.done && (
+        <div className="flex flex-col pt-20 justify-center items-center">
+          <CiWarning className="text-red-400 text-9xl"></CiWarning>
+          <label className="text-[25px] font-semibold">ไม่พบอาการฉุกเฉิน</label>
+          <br />
+          <label>กรุณาติดต่อสัตวแพทย์เพื่อรับคำแนะนำ</label>
+          {/* <ProgressBar active={Step.done} /> */}
+        </div>
       )}
       {/* <ProgressBar active={stepNumber} /> */}
     </div>
