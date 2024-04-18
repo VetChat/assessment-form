@@ -151,6 +151,7 @@ export const RenderQuestion: React.FC<RenderQuestionProps> = ({
             <DateInput
               valueFormat="DD/MM/YYYY"
               placeholder="DD/MM/YYYY"
+              maxDate={dayjs(new Date()).toDate()}
               required={questionItem.isRequired}
               onChange={(e) => {
                 if (!e) {
