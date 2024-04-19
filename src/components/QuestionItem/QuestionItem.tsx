@@ -5,6 +5,7 @@ import {
   FormValue,
   Question,
   QuestionItemProps,
+  QuestionSet,
 } from "./interface/QuestionItem";
 import { RenderQuestion } from "./function/RenderQuestion";
 import { IoReturnDownBack } from "react-icons/io5";
@@ -18,7 +19,7 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
   animalId,
 }) => {
   const [groupList, setGroupList] = useState<number[]>([]);
-  const [currentGroup, setCurrentGroup] = useState<number>(0);
+  const [currentGroup, setCurrentGroup] = useState<number>(-1);
   const [currentQuestion, setCurrentQuestion] = useState<Question[]>([]);
   const [isFirst, setIsFirst] = useState<boolean>(true);
   const [isLast, setIsLast] = useState<boolean>(false);
@@ -30,62 +31,56 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
     },
   });
 
+  const processQuestions = (
+    questionSet: QuestionSet[]
+  ): {
+    processedQuestions: Question[];
+    groupList: number[];
+  } => {
+    let groupNumber = 0;
+    let questionIndex = 0;
+    const processedQuestions: Question[] = [];
+    const groupList: number[] = [];
+
+    questionSet.forEach((symptomQuestionSet) => {
+      groupNumber++;
+      symptomQuestionSet.listQuestion.forEach((question) => {
+        question.questionIndex = questionIndex++;
+        question.skippedFrom = [];
+        question.isRequired = true;
+
+        if (["yes/no", "duration"].includes(question.pattern)) {
+          question.pattern = "choice";
+        }
+
+        question.group = groupNumber;
+        question.listAnswer?.some((answer) => answer.skipToQuestion != null) &&
+          groupNumber++;
+
+        if (!groupList.includes(question.group)) {
+          groupList.push(question.group);
+        }
+        processedQuestions.push(question);
+      });
+    });
+
+    return { processedQuestions, groupList: groupList }; // Initial group list
+  };
+
   useEffect(() => {
     if (!questionSet) {
       return;
     }
     if (isQA) {
-      const allQuestions: Question[] = [];
-      const group: number[] = [];
-
-      // assgin group number to all question, this will be use to sperate the question for rendering
-      let groupNumber = 0;
-      let questionIndex = 0;
-      questionSet.map((symptomQuestionSet) => {
-        if (groupNumber != 0) {
-          group.push(groupNumber);
-          groupNumber++;
-        }
-        symptomQuestionSet.listQuestion.map((question) => {
-          question.questionIndex = questionIndex;
-          questionIndex++;
-          question.skippedFrom = [];
-          question.isRequired = true;
-          if (
-            question.pattern === "yes/no" ||
-            question.pattern === "duration"
-          ) {
-            question.pattern = "choice";
-          }
-
-          if (
-            question.listAnswer?.find(
-              (answerlist) => answerlist.skipToQuestion != null
-            )
-          ) {
-            question.group = groupNumber;
-            group.push(groupNumber);
-            groupNumber++;
-          } else {
-            question.group = groupNumber;
-          }
-        });
-      });
-
-      setGroupList(group);
-      setCurrentGroup(group[0] || 0);
-
-      questionSet.forEach((symptom) => {
-        allQuestions.push(...symptom.listQuestion);
-      });
-
-      console.log("allQuestions: ", allQuestions);
+      const { processedQuestions, groupList } = processQuestions(questionSet);
+      setGroupList(groupList);
+      setCurrentGroup(groupList[0]);
 
       form.setValues({
-        questions: allQuestions,
+        questions: processedQuestions,
         answerList:
-          allQuestions.length > 0 &&
-          allQuestions.reduce((acc: any, item: Question) => {
+          processedQuestions.length > 0 &&
+          processedQuestions.reduce((acc: any, item: Question) => {
             acc[item.questionId] = "";
             return acc;
           }, {} as { [key: number]: string }),
