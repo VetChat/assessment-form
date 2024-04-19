@@ -2,8 +2,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type Body_Question_update_questions = {
-    questions_data: string;
-    images?: Array<(Blob | null)>;
+export type TicketAnswerRecordUpdateResponse = {
+    ticketAnswerRecordId: number;
+    answer: (string | number);
+    message: string;
 };
 

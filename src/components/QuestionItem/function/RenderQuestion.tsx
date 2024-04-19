@@ -1,24 +1,39 @@
-import { Group, NumberInput, Radio, TextInput } from "@mantine/core";
+import {
+  Autocomplete,
+  Group,
+  NumberInput,
+  Radio,
+  TextInput,
+} from "@mantine/core";
 import { Question, RenderQuestionProps } from "../interface/QuestionItem";
 import { useState } from "react";
 import { DateInput } from "@mantine/dates";
 import dayjs from "dayjs";
+import { useQuery } from "react-query";
+import { BreedsService } from "../../../client";
 
 export const RenderQuestion: React.FC<RenderQuestionProps> = ({
   questionItem,
   form,
+  animalId,
 }) => {
   const [isDate, setIsDate] = useState(true);
+
+  const breedSuggestion = useQuery({
+    queryKey: ["breedSuggestion"],
+    queryFn: () =>
+      BreedsService.breedsGetBreedByAnimalId({ animalId: animalId! }),
+    enabled: !!animalId,
+  });
+
   switch (questionItem.pattern) {
     case "text":
       return (
-        <div>
-          <TextInput
-            label={questionItem.question}
-            {...form?.getInputProps(`answerList.${questionItem.questionId}`)}
-            required={questionItem.isRequired}
-          />
-        </div>
+        <TextInput
+          label={questionItem.question}
+          {...form?.getInputProps(`answerList.${questionItem.questionId}`)}
+          required={questionItem.isRequired}
+        />
       );
     case "choice":
       if (questionItem.listAnswer) {
@@ -187,6 +202,15 @@ export const RenderQuestion: React.FC<RenderQuestionProps> = ({
             />
           )}
         </div>
+      );
+    case "breed":
+      return (
+        <Autocomplete
+          label={questionItem.question}
+          required={questionItem.isRequired}
+          {...form?.getInputProps(`answerList.${questionItem.questionId}`)}
+          data={breedSuggestion.data?.map((item) => item.breedName)}
+        />
       );
   }
 };

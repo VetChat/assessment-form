@@ -194,7 +194,7 @@ const Home = () => {
 
   const handleSubmitHistory = (value: FormValue) => {
     const answerList = mapFormToAnswer(value);
-    ticket.mutate({
+    ticket.mutateAsync({
       animalId: animalId!,
       listAnswer: answerList,
     });
@@ -220,13 +220,17 @@ const Home = () => {
       .mutateAsync(recordData)
       .then((res: AnswerRecordResponse) => {
         Swal.fire({
-          title: "Success",
-          text: "Your answer has been recorded",
+          title: "Success!",
+          text:
+            "Your answer has been recorded. This is your ticket number: " +
+            res.ticketId +
+            ". Please keep this ticket number for further reference.",
+          // html: "Please keep this ticket number for further reference.",
           icon: "success",
-          confirmButtonText: "Cool",
+          // confirmButtonText: "Cool",
         });
       })
-      .then(() => setStepNumber(Step.done));
+      .then(() => setStepNumber(Step.choosePet));
   };
 
   if (warning) {
@@ -277,6 +281,7 @@ const Home = () => {
           title="กรอกประวัติสัตว์เลี้ยง"
           onSubmitHandler={handleSubmitHistory}
           questionSet={[{ listQuestion: trackingQuestion?.data! }]}
+          animalId={animalId}
         />
       )}
       {stepNumber === Step.chooseSymptom && (

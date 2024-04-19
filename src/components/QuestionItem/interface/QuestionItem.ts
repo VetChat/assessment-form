@@ -35,6 +35,7 @@ export interface QuestionItemProps {
   onSubmitHandler: (formValue: FormValue) => void;
   questionSet: QuestionSet[] | undefined;
   isQA?: boolean;
+  animalId?: number;
 }
 
 export interface RenderQuestionProps {
@@ -45,4 +46,5 @@ export interface RenderQuestionProps {
     };
   }>;
   questionItem: Question;
+  animalId?: number;
 }

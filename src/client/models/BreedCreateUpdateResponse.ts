@@ -2,11 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type QuestionSetRead = {
-    questionSetId: number;
-    symptomId: number;
-    symptomName: string;
+export type BreedCreateUpdateResponse = {
+    breedId: number;
+    breedName: string;
     animalId: number;
-    questionCount: number;
+    message: string;
 };
 

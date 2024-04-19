@@ -9,7 +9,7 @@ export type QuestionWithListAnswerResponse = {
     pattern: string;
     imagePath?: (string | null);
     ordinal: number;
-    listAnswer: AnswerCreateUpdateDeleteBulkResponse;
+    listAnswer?: (AnswerCreateUpdateDeleteBulkResponse | null);
     message: string;
 };
 

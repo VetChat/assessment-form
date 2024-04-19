@@ -15,6 +15,7 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
   onSubmitHandler,
   questionSet,
   isQA = false,
+  animalId,
 }) => {
   const [groupList, setGroupList] = useState<number[]>([]);
   const [currentGroup, setCurrentGroup] = useState<number>(0);
@@ -72,11 +73,13 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
       });
 
       setGroupList(group);
-      setCurrentGroup(group[0]);
+      setCurrentGroup(group[0] || 0);
 
       questionSet.forEach((symptom) => {
         allQuestions.push(...symptom.listQuestion);
       });
+
+      console.log("allQuestions: ", allQuestions);
 
       form.setValues({
         questions: allQuestions,
@@ -157,6 +160,7 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
         question.group === currentGroup && question.skippedFrom?.length === 0
     );
     setCurrentQuestion(questions);
+    console.log("currentQuestion: ", questions);
   }, [currentGroup]);
 
   const showNextQuestion = (isGoingBack: boolean) => {
@@ -185,7 +189,11 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
           {form.values.questions.length > 0 && !isQA
             ? form.values.questions.map((item: Question, index: number) => (
                 <div key={index} className="pb-5">
-                  <RenderQuestion questionItem={item} form={form} />
+                  <RenderQuestion
+                    animalId={animalId}
+                    questionItem={item}
+                    form={form}
+                  />
                 </div>
               ))
             : currentQuestion.map((questionItem) => (
